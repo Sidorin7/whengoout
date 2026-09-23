@@ -56,13 +56,18 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 (`mcp__supabase__apply_migration`) или Supabase CLI — создаёт таблицы `routes` и `settings` с
 RLS-политиками по `auth.uid()`.
 
-### Обязательная настройка magic link (Supabase Dashboard)
+### Magic link: как это работает и что настроить руками
 
-Без этого шага письмо со ссылкой придёт, но переход по ней не авторизует пользователя — по
-умолчанию Supabase кладёт в письмо `{{ .ConfirmationURL }}`, который ведёт на служебный `/verify`
-и возвращается с параметром `?code=` (PKCE), а наш обработчик (`app/auth/confirm/route.ts`) ждёт
-`token_hash`/`type` (это осознанный выбор: PKCE-обмен кода требует cookie из того же браузера, что
-не работает, если ссылку открывают на другом устройстве).
+По умолчанию Supabase кладёт в письмо `{{ .ConfirmationURL }}`, который сначала ведёт на
+служебный `.../auth/v1/verify`, а тот уже редиректит браузер на наш `/auth/confirm` с параметром
+`?code=` (PKCE). `app/auth/confirm/route.ts` умеет обменивать этот `code` на сессию
+(`exchangeCodeForSession`) — **это работает из коробки**, без правок в Supabase Dashboard, при
+условии что ссылку открывают в том же браузере, где её запрашивали (PKCE-verifier лежит в cookie
+этого браузера).
+
+Если нужно, чтобы ссылка работала и при открытии на **другом устройстве** (например, письмо
+открыли на телефоне, а сессию хотят в браузере на компьютере), это требует другого формата ссылки
+— без промежуточного `/verify`:
 
 1. **Authentication → Email Templates** — в шаблонах **Magic Link** и **Confirm signup**
    (при первом входе новый пользователь сначала получает Confirm signup — `shouldCreateUser` по
@@ -70,8 +75,16 @@ RLS-политиками по `auth.uid()`.
    ```
    {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email
    ```
+   Обработчик поддерживает и этот формат (`verifyOtp` по `token_hash`).
 2. **Authentication → URL Configuration** — укажите Site URL (например,
    `http://localhost:3000` для разработки) и добавьте его же в Redirect URLs.
+
+Обязательно и в том, и в другом случае: **Authentication → URL Configuration → Redirect URLs**
+должен содержать адрес приложения (`http://localhost:3000` для разработки), иначе Supabase
+откажется редиректить на `/auth/confirm`.
+
+Также учитывайте лимит бесплатной отправки писем Supabase (несколько писем в час) — при
+`429 email rate limit exceeded` письмо не отправляется, нужно подождать.
 
 ## Запуск
 
