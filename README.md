@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Когда выйти?
 
-## Getting Started
+MVP веб-сервиса, который по адресу отправления, адресу назначения, времени прибытия и запасу
+времени рассчитывает, во сколько нужно выйти. Маршруты и геокодирование — через API 2ГИС.
 
-First, run the development server:
+## Стек
+
+Next.js 15+ (App Router) · TypeScript · Tailwind CSS · shadcn/ui · pnpm
+
+## Переменные окружения
+
+Скопируйте `.env.example` в `.env.local` и укажите ключ:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```
+DGIS_API_KEY=  # ключ доступа к API 2ГИС
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Как получить ключ 2ГИС (бесплатно)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Зарегистрируйтесь в личном кабинете **Менеджер Платформы**: https://dev.2gis.ru/
+2. В разделе «Ключи» создайте **демо-ключ** (бесплатный, с ограничением по числу запросов).
+3. Убедитесь, что в ключе включены сервисы: **API поиска** (Suggest, Geocoder) и
+   **API навигации** (Routing, Public Transport).
+4. Вставьте значение ключа в `.env.local`.
 
-## Learn More
+**Без ключа сервис тоже работает** — в режиме разработки (`NODE_ENV !== production`) он
+автоматически переключается на демо-данные (несколько московских адресов и упрощённый расчёт
+расстояния/времени), чтобы можно было проверить весь интерфейс. В таких ответах API проставляется
+заголовок `X-Mock: 1`, а в результате — пояснительная надпись. В продакшене без ключа сервис вернёт
+понятную ошибку вместо тихого использования моков.
 
-To learn more about Next.js, take a look at the following resources:
+## Запуск
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm install
+pnpm dev       # http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Продакшен-сборка:
 
-## Deploy on Vercel
+```bash
+pnpm build
+pnpm start
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Проверки:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm lint
+pnpm exec tsc --noEmit
+```
+
+## Известное ограничение API 2ГИС
+
+У 2ГИС нет режима «построить маршрут так, чтобы прибыть к заданному времени» — только время
+отправления. Поэтому сервис делает расчёт в два прохода: сначала строит маршрут от ориентировочного
+времени выхода, затем уточняет маршрут от времени, полученного на первом шаге (важно для авто и
+общественного транспорта, где длительность зависит от времени суток).
+
+## Структура
+
+```
+app/
+  page.tsx              главный экран
+  api/geocode/route.ts  подсказки и геокодирование адресов (проксирует 2ГИС, ключ не покидает сервер)
+  api/route/route.ts    расчёт времени выхода
+components/             UI-компоненты формы, результата и шкалы времени
+lib/
+  2gis.ts               серверный клиент 2ГИС API
+  calculate-departure.ts чистая логика расчёта времени
+  mock.ts               демо-данные для режима без ключа
+  types.ts              общие типы
+```
