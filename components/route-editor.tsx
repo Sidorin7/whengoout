@@ -1,0 +1,191 @@
+"use client";
+
+import { useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { generateRouteId } from "@/lib/routes-storage";
+import { WEEKDAYS, WEEKDAY_LABELS, type ScheduleEntry, type SavedRoute, type Weekday } from "@/lib/types";
+
+interface RouteEditorProps {
+  initialRoute?: SavedRoute;
+  defaultBufferMinutes: number;
+  onSaved: (route: SavedRoute) => void;
+  onCancel?: () => void;
+}
+
+let entryKeySeq = 0;
+function nextEntryKey(): string {
+  entryKeySeq += 1;
+  return `entry-${entryKeySeq}`;
+}
+
+export function RouteEditor({
+  initialRoute,
+  defaultBufferMinutes,
+  onSaved,
+  onCancel,
+}: RouteEditorProps) {
+  const [name, setName] = useState(initialRoute?.name ?? "");
+  const [travelMinutes, setTravelMinutes] = useState(
+    initialRoute ? String(initialRoute.travelMinutes) : "",
+  );
+  const [bufferMinutes, setBufferMinutes] = useState(
+    initialRoute?.bufferMinutes !== undefined ? String(initialRoute.bufferMinutes) : "",
+  );
+  const [schedule, setSchedule] = useState<Array<ScheduleEntry & { key: string }>>(
+    () => (initialRoute?.schedule ?? []).map((entry) => ({ ...entry, key: nextEntryKey() })),
+  );
+
+  const defaultBuffer = defaultBufferMinutes;
+  const travelMinutesNumber = Number(travelMinutes);
+  const isIncomplete =
+    !name.trim() || !travelMinutes.trim() || !Number.isFinite(travelMinutesNumber) || travelMinutesNumber < 0;
+
+  function updateEntry(key: string, patch: Partial<ScheduleEntry>) {
+    setSchedule((prev) => prev.map((entry) => (entry.key === key ? { ...entry, ...patch } : entry)));
+  }
+
+  function removeEntry(key: string) {
+    setSchedule((prev) => prev.filter((entry) => entry.key !== key));
+  }
+
+  function addEntry() {
+    setSchedule((prev) => [...prev, { key: nextEntryKey(), weekday: "mon", time: "" }]);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (isIncomplete) return;
+
+    const trimmedBuffer = bufferMinutes.trim();
+    const bufferOverride = trimmedBuffer === "" ? undefined : Number(trimmedBuffer);
+
+    const route: SavedRoute = {
+      id: initialRoute?.id ?? generateRouteId(),
+      name: name.trim(),
+      travelMinutes: travelMinutesNumber,
+      bufferMinutes:
+        bufferOverride !== undefined && Number.isFinite(bufferOverride) ? bufferOverride : undefined,
+      schedule: schedule
+        .filter((entry) => entry.time.trim() !== "")
+        .map(({ weekday, time }) => ({ weekday, time })),
+    };
+    onSaved(route);
+  }
+
+  return (
+    <Card>
+      <CardContent>
+        <h2 className="mb-4 font-heading text-base font-semibold tracking-tight">
+          {initialRoute ? "Редактировать маршрут" : "Новый маршрут"}
+        </h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="route-name">Название маршрута</Label>
+            <Input
+              id="route-name"
+              placeholder="Например: Корпус А"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="route-travel-minutes">Время в пути, мин</Label>
+              <Input
+                id="route-travel-minutes"
+                type="number"
+                min={0}
+                placeholder="30"
+                className="font-mono tabular-nums"
+                value={travelMinutes}
+                onChange={(e) => setTravelMinutes(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="route-buffer-minutes">Свой запас, мин</Label>
+              <Input
+                id="route-buffer-minutes"
+                type="number"
+                min={0}
+                placeholder={`По умолч.: ${defaultBuffer}`}
+                className="font-mono tabular-nums"
+                value={bufferMinutes}
+                onChange={(e) => setBufferMinutes(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Расписание пар</Label>
+            {schedule.map((entry) => (
+              <div key={entry.key} className="flex items-center gap-2">
+                <Select
+                  value={entry.weekday}
+                  onValueChange={(value) => updateEntry(entry.key, { weekday: value as Weekday })}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {WEEKDAYS.map((weekday) => (
+                      <SelectItem key={weekday} value={weekday}>
+                        {WEEKDAY_LABELS[weekday]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="time"
+                  className="flex-1 font-mono tabular-nums"
+                  value={entry.time}
+                  onChange={(e) => updateEntry(entry.key, { time: e.target.value })}
+                  aria-label="Время начала пары"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Удалить время"
+                  className="hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => removeEntry(entry.key)}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" className="border-dashed" onClick={addEntry}>
+              <Plus data-icon="inline-start" />
+              Добавить время
+            </Button>
+          </div>
+
+          <div className="flex gap-3">
+            {onCancel && (
+              <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
+                Отмена
+              </Button>
+            )}
+            <Button type="submit" className="flex-1" disabled={isIncomplete}>
+              Сохранить маршрут
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
