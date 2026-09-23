@@ -33,6 +33,46 @@ DGIS_API_KEY=  # ключ доступа к API 2ГИС
 заголовок `X-Mock: 1`, а в результате — пояснительная надпись. В продакшене без ключа сервис вернёт
 понятную ошибку вместо тихого использования моков.
 
+## Supabase (авторизация и данные)
+
+Маршруты и настройки хранятся в Supabase (Postgres + Auth), а не в localStorage. Вход — по
+magic link (ссылка на почту, без пароля).
+
+### Переменные окружения
+
+Добавьте в `.env.local` (значения — из **Project Settings → API** в Supabase Dashboard):
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+Без этих переменных серверный клиент Supabase (в `proxy.ts` и `lib/supabase/server.ts`) упадёт
+с ошибкой на каждом запросе.
+
+### Схема БД
+
+Миграция лежит в `supabase/migrations/` и применяется через Supabase MCP
+(`mcp__supabase__apply_migration`) или Supabase CLI — создаёт таблицы `routes` и `settings` с
+RLS-политиками по `auth.uid()`.
+
+### Обязательная настройка magic link (Supabase Dashboard)
+
+Без этого шага письмо со ссылкой придёт, но переход по ней не авторизует пользователя — по
+умолчанию Supabase кладёт в письмо `{{ .ConfirmationURL }}`, который ведёт на служебный `/verify`
+и возвращается с параметром `?code=` (PKCE), а наш обработчик (`app/auth/confirm/route.ts`) ждёт
+`token_hash`/`type` (это осознанный выбор: PKCE-обмен кода требует cookie из того же браузера, что
+не работает, если ссылку открывают на другом устройстве).
+
+1. **Authentication → Email Templates** — в шаблонах **Magic Link** и **Confirm signup**
+   (при первом входе новый пользователь сначала получает Confirm signup — `shouldCreateUser` по
+   умолчанию включён) замените ссылку на:
+   ```
+   {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email
+   ```
+2. **Authentication → URL Configuration** — укажите Site URL (например,
+   `http://localhost:3000` для разработки) и добавьте его же в Redirect URLs.
+
 ## Запуск
 
 ```bash

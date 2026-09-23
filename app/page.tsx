@@ -11,15 +11,24 @@ import type { SavedRoute } from "@/lib/types";
 type View = { name: "list" } | { name: "edit"; route?: SavedRoute };
 
 export default function Home() {
-  const { routes, loading, upsertRoute, deleteRoute } = useRoutes();
-  const { settings, setDefaultBufferMinutes } = useSettings();
+  const { routes, loading: routesLoading, error: routesError, upsertRoute, deleteRoute } = useRoutes();
+  const {
+    settings,
+    loading: settingsLoading,
+    error: settingsError,
+    setDefaultBufferMinutes,
+  } = useSettings();
+  const loading = routesLoading || settingsLoading;
+  const error = routesError ?? settingsError;
   // null = пользователь ещё не выбирал экран явно — берём разумное значение по умолчанию из routes.
   const [explicitView, setView] = useState<View | null>(null);
-  const view = explicitView ?? (routes.length === 0 ? { name: "edit" } : { name: "list" });
+  // Маршрутов не осталось (включая случай "удалили последний") — всегда редактор,
+  // даже если до этого явно был выбран список.
+  const view: View = routes.length === 0 ? { name: "edit" } : (explicitView ?? { name: "list" });
 
   async function handleSaved(route: SavedRoute) {
-    await upsertRoute(route);
-    setView({ name: "list" });
+    const ok = await upsertRoute(route);
+    if (ok) setView({ name: "list" });
   }
 
   async function handleDelete(route: SavedRoute) {
@@ -46,6 +55,12 @@ export default function Home() {
         </div>
         <SignOutButton />
       </div>
+
+      {error && (
+        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
       {view.name === "list" ? (
         <SavedRoutes

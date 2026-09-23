@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { WEEKDAY_LABELS, type SavedRoute } from "@/lib/types";
 interface SavedRoutesProps {
   routes: SavedRoute[];
   settings: Settings;
-  onSettingsChange: (minutes: number) => void;
+  onSettingsChange: (minutes: number) => Promise<boolean>;
   onEdit: (route: SavedRoute) => void;
   onDelete: (route: SavedRoute) => void;
   onAdd: () => void;
@@ -85,6 +86,25 @@ export function SavedRoutes({
   onAdd,
 }: SavedRoutesProps) {
   const now = useNow();
+  const [bufferDraft, setBufferDraft] = useState(String(settings.defaultBufferMinutes));
+  // Синхронизируем черновик, когда значение меняют извне (загрузка/другая вкладка), без
+  // useEffect — обновление state во время рендера при смене пропа, а не в отдельном эффекте,
+  // чтобы не перезаписывать то, что пользователь печатает прямо сейчас (commit на blur).
+  const [syncedBuffer, setSyncedBuffer] = useState(settings.defaultBufferMinutes);
+  if (settings.defaultBufferMinutes !== syncedBuffer) {
+    setSyncedBuffer(settings.defaultBufferMinutes);
+    setBufferDraft(String(settings.defaultBufferMinutes));
+  }
+
+  async function commitBufferDraft() {
+    const value = Number(bufferDraft);
+    if (Number.isFinite(value) && value >= 0) {
+      const ok = await onSettingsChange(value);
+      if (!ok) setBufferDraft(String(settings.defaultBufferMinutes));
+    } else {
+      setBufferDraft(String(settings.defaultBufferMinutes));
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -101,10 +121,11 @@ export function SavedRoutes({
             type="number"
             min={0}
             className="w-16 font-mono tabular-nums"
-            value={settings.defaultBufferMinutes}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              if (Number.isFinite(value) && value >= 0) onSettingsChange(value);
+            value={bufferDraft}
+            onChange={(e) => setBufferDraft(e.target.value)}
+            onBlur={commitBufferDraft}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
             }}
           />
         </div>

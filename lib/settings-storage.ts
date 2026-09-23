@@ -41,14 +41,15 @@ export function useSettings() {
     };
   }, []);
 
-  const setDefaultBufferMinutes = useCallback(async (minutes: number) => {
+  const setDefaultBufferMinutes = useCallback(async (minutes: number): Promise<boolean> => {
     const supabase = createClient();
     const {
       data: { user },
+      error: userError,
     } = await supabase.auth.getUser();
-    if (!user) {
+    if (userError || !user) {
       setError("Сессия истекла — войдите заново.");
-      return;
+      return false;
     }
 
     const { error: upsertError } = await supabase
@@ -56,10 +57,11 @@ export function useSettings() {
       .upsert({ user_id: user.id, default_buffer_minutes: minutes });
     if (upsertError) {
       setError(upsertError.message);
-      return;
+      return false;
     }
     setError(null);
     setSettings({ defaultBufferMinutes: minutes });
+    return true;
   }, []);
 
   return { settings, loading, error, setDefaultBufferMinutes };

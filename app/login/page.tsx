@@ -1,13 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
+const LINK_ERROR_MESSAGE = "Ссылка недействительна или устарела — запросите новую.";
+
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const linkError = searchParams.get("error") === "link";
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -43,6 +56,11 @@ export default function LoginPage() {
       </div>
       <Card>
         <CardContent>
+          {linkError && status !== "sent" && (
+            <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {LINK_ERROR_MESSAGE}
+            </p>
+          )}
           {status === "sent" ? (
             <p className="text-sm">
               Проверьте почту <span className="font-medium">{email}</span> и перейдите по ссылке
