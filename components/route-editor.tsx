@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowRight, Plus, Trash2 } from "lucide-react";
-import { inputClass, primaryButtonClass, secondaryButtonClass } from "@/components/board-styles";
+import { cardClass, inputClass, primaryButtonClass, secondaryButtonClass } from "@/components/board-styles";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -85,7 +85,7 @@ export function RouteEditor({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-6 rounded-3xl border border-border bg-card p-6 shadow-2xl shadow-black/40 sm:p-8"
+      className={cardClass + " flex flex-col gap-6 p-6 sm:p-8"}
     >
       <div className="flex flex-col gap-2">
         <Label htmlFor="route-name">Куда едем</Label>
@@ -142,7 +142,7 @@ export function RouteEditor({
               value={entry.weekday}
               onValueChange={(value) => updateEntry(entry.key, { weekday: value as Weekday })}
             >
-              <SelectTrigger className="h-12! w-22 shrink-0 rounded-xl border-border bg-secondary/60 pr-3 pl-4 font-mono text-base dark:bg-secondary/60">
+              <SelectTrigger className="h-12! w-22 shrink-0 rounded-md border-foreground/25 bg-card pr-3 pl-4 font-mono text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -163,7 +163,7 @@ export function RouteEditor({
             <button
               type="button"
               aria-label="Удалить время"
-              className="grid size-12 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              className="grid size-12 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
               onClick={() => removeEntry(entry.key)}
             >
               <Trash2 className="size-4" />
@@ -173,7 +173,7 @@ export function RouteEditor({
         <button
           type="button"
           onClick={addEntry}
-          className="group flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border text-sm font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          className="group flex h-12 items-center justify-center gap-2 rounded-md border-[1.5px] border-dashed border-foreground/40 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
         >
           <Plus className="size-4 transition-transform group-hover:rotate-90" />
           Добавить время
