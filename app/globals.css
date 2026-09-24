@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Тема всегда светлая: dark: срабатывает только под классом .dark, которого нет. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -34,30 +37,30 @@
 }
 
 /*
- * Единая тёмная тема, вдохновлённая механическим табло вокзала (сплит-флап):
- * тёмная панель, тёплый "неоновый" янтарь для акцентов и моноширинные цифры
- * для времени. Не зависит от системной темы — табло всегда выглядит одинаково.
+ * Светлая «афишная» тема: кремовая бумага, чернильный текст и ультрамарин как
+ * единственный акцент. Плоские карточки с рамками вместо свечения и мягких теней.
+ * Не зависит от системной темы.
  */
 :root {
-  --background: #15171c;
-  --foreground: #f3efe3;
-  --card: #1e212a;
-  --card-foreground: #f3efe3;
-  --popover: #1e212a;
-  --popover-foreground: #f3efe3;
-  --primary: #ffa430;
-  --primary-foreground: #15171c;
-  --secondary: #262a34;
-  --secondary-foreground: #f3efe3;
-  --muted: #262a34;
-  --muted-foreground: #8d93a1;
-  --accent: #262a34;
-  --accent-foreground: #f3efe3;
-  --destructive: #e5484d;
-  --border: #2d313c;
-  --input: #2d313c;
-  --ring: #ffa430;
-  --radius: 0.55rem;
+  --background: #f1ede4;
+  --foreground: #111111;
+  --card: #faf8f3;
+  --card-foreground: #111111;
+  --popover: #faf8f3;
+  --popover-foreground: #111111;
+  --primary: #2536ff;
+  --primary-foreground: #ffffff;
+  --secondary: #e4dfd3;
+  --secondary-foreground: #111111;
+  --muted: #e4dfd3;
+  --muted-foreground: #5e5a52;
+  --accent: #e4dfd3;
+  --accent-foreground: #111111;
+  --destructive: #d93a1e;
+  --border: #cfc8b8;
+  --input: #cfc8b8;
+  --ring: #2536ff;
+  --radius: 0.375rem;
 }
 
 @layer base {
@@ -69,5 +72,14 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }

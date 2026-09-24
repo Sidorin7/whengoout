@@ -1,12 +1,14 @@
-import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/auth/actions";
 
 export function SignOutButton() {
   return (
     <form action={signOut}>
-      <Button type="submit" variant="ghost" size="sm">
-        Выйти
-      </Button>
+      <button
+        type="submit"
+        className="rounded-md border-[1.5px] border-foreground px-4 py-2 text-sm font-medium transition-colors hover:bg-foreground hover:text-background"
+      >
+        Выйти из аккаунта
+      </button>
     </form>
   );
 }

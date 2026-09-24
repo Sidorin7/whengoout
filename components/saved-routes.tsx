@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { cardClass, inputClass } from "@/components/board-styles";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { calculateAllDepartures, formatTime, isToday } from "@/lib/calculate-departure";
@@ -33,8 +32,8 @@ function RouteSchedule({
 
   if (route.schedule.length === 0) {
     return (
-      <p className="py-1 text-sm text-muted-foreground">
-        Расписание пока пустое — добавьте время в редактировании маршрута.
+      <p className="px-5 py-5 text-sm text-muted-foreground sm:px-6">
+        Расписание пустое. Табло не угадает само — добавь время пар в редактировании.
       </p>
     );
   }
@@ -42,38 +41,45 @@ function RouteSchedule({
   const departures = calculateAllDepartures(route.schedule, effectiveBuffer, route.travelMinutes);
 
   return (
-    <div className="flex flex-col">
+    <ul>
       {departures.map(({ entry, arriveAt, departAt }, i) => {
         const today = isToday(entry.weekday, now);
         return (
-          <div
+          <li
             key={`${entry.weekday}-${entry.time}-${i}`}
             data-today={today || undefined}
-            className="grid grid-cols-[2.25rem_3.75rem_1fr_auto] items-baseline gap-x-2 border-t border-border/60 py-2 first:border-t-0 data-[today]:-mx-4 data-[today]:rounded-md data-[today]:border-t-0 data-[today]:bg-primary/10 data-[today]:px-4"
+            className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 border-t border-border px-5 py-3 first:border-t-0 data-[today]:border-l-4 data-[today]:border-l-primary data-[today]:bg-primary/8 data-[today]:pl-4 sm:grid-cols-[3.5rem_1fr_auto] sm:gap-5 sm:px-6 sm:py-4 sm:data-[today]:pl-5"
           >
             <span
               className={
-                "text-xs font-semibold " + (today ? "text-primary" : "text-muted-foreground")
+                "font-mono text-xs font-semibold tracking-wider uppercase sm:text-sm " +
+                (today ? "text-primary" : "text-muted-foreground")
               }
             >
               {WEEKDAY_LABELS[entry.weekday]}
+              {today && <span className="block text-[10px] tracking-widest">сегодня</span>}
             </span>
-            <span className="font-mono text-sm tabular-nums text-muted-foreground">
-              {formatTime(arriveAt)}
+            <span className="text-sm text-muted-foreground sm:text-base">
+              пара в{" "}
+              <span className="font-mono text-foreground tabular-nums">{formatTime(arriveAt)}</span>
             </span>
-            <span className="text-xs text-muted-foreground">выйти</span>
-            <span
-              className={
-                "text-right font-mono font-semibold tabular-nums " +
-                (today ? "text-lg text-primary" : "text-base text-foreground")
-              }
-            >
-              {formatTime(departAt)}
+            <span className="flex items-center gap-2 sm:gap-3">
+              <span className="hidden font-mono text-xs tracking-wider text-muted-foreground uppercase sm:inline">
+                выйти
+              </span>
+              <span
+                className={
+                  "rounded-md px-2 py-0.5 font-mono text-lg font-semibold tabular-nums sm:text-2xl " +
+                  (today ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground")
+                }
+              >
+                {formatTime(departAt)}
+              </span>
             </span>
-          </div>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }
 
@@ -107,20 +113,23 @@ export function SavedRoutes({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
-        <span className="font-mono text-sm tabular-nums text-muted-foreground">
-          Сейчас <span className="text-primary">{formatTime(now)}</span>
-        </span>
-        <div className="flex items-center gap-2">
-          <Label htmlFor="default-buffer" className="text-xs text-muted-foreground">
-            Запас по умолчанию, мин
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 rounded-lg border-[1.5px] border-foreground bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div>
+          <p className="font-mono text-xs tracking-widest text-muted-foreground uppercase">сейчас</p>
+          <p className="font-mono text-4xl font-semibold text-primary tabular-nums sm:text-5xl">
+            {formatTime(now)}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Label htmlFor="default-buffer" className="max-w-[16ch] text-sm leading-tight text-muted-foreground">
+            Запас на «ой, ключи забыл», мин
           </Label>
           <Input
             id="default-buffer"
             type="number"
             min={0}
-            className="w-16 font-mono tabular-nums"
+            className={inputClass + " w-20 text-center font-mono tabular-nums"}
             value={bufferDraft}
             onChange={(e) => setBufferDraft(e.target.value)}
             onBlur={commitBufferDraft}
@@ -131,54 +140,51 @@ export function SavedRoutes({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         {routes.map((route) => (
-          <Card key={route.id}>
-            <CardContent className="flex flex-col gap-1">
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <h2 className="font-heading text-sm font-semibold tracking-tight sm:text-base">
-                    {route.name}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">
-                    В пути {route.travelMinutes} мин, запас{" "}
-                    {route.bufferMinutes ?? settings.defaultBufferMinutes} мин
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Редактировать маршрут"
-                  onClick={() => onEdit(route)}
-                >
-                  <Pencil />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Удалить маршрут"
-                  className="hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => onDelete(route)}
-                >
-                  <Trash2 />
-                </Button>
+          <article
+            key={route.id}
+            className={cardClass + " overflow-hidden"}
+          >
+            <div className="flex items-center gap-3 border-b-[1.5px] border-foreground bg-secondary px-5 py-4 sm:px-6">
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate font-heading text-lg font-bold tracking-tight sm:text-xl">
+                  {route.name}
+                </h2>
+                <p className="mt-0.5 font-mono text-xs tracking-wide text-muted-foreground uppercase">
+                  в пути {route.travelMinutes} мин · запас{" "}
+                  {route.bufferMinutes ?? settings.defaultBufferMinutes} мин
+                </p>
               </div>
-              <RouteSchedule route={route} defaultBufferMinutes={settings.defaultBufferMinutes} now={now} />
-            </CardContent>
-          </Card>
+              <button
+                type="button"
+                aria-label="Редактировать маршрут"
+                className="grid size-10 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+                onClick={() => onEdit(route)}
+              >
+                <Pencil className="size-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Удалить маршрут"
+                className="grid size-10 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => onDelete(route)}
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+            <RouteSchedule route={route} defaultBufferMinutes={settings.defaultBufferMinutes} now={now} />
+          </article>
         ))}
 
-        <Button
+        <button
           type="button"
-          variant="outline"
-          className="w-full border-dashed"
           onClick={onAdd}
+          className="group flex h-16 items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-foreground/40 font-heading text-base font-bold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
         >
-          <Plus data-icon="inline-start" />
-          Новый маршрут
-        </Button>
+          <Plus className="size-5 transition-transform group-hover:rotate-90" />
+          Ещё маршрут
+        </button>
       </div>
     </div>
   );

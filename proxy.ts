@@ -29,6 +29,7 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute =
+    pathname.startsWith("/welcome") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password") ||
@@ -36,13 +37,14 @@ export async function proxy(request: NextRequest) {
   // Pages an already-signed-in user shouldn't linger on — unlike /auth/update-password,
   // which a just-verified recovery link relies on staying reachable while authenticated.
   const isSignedOutOnlyRoute =
+    pathname.startsWith("/welcome") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password");
 
   if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = pathname === "/" ? "/welcome" : "/login";
     return NextResponse.redirect(url);
   }
 

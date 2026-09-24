@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight } from "lucide-react";
+import { AuthShell } from "@/components/auth-shell";
+import { inputClass, primaryButtonClass } from "@/components/board-styles";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
@@ -59,69 +60,85 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-8">
-      <div>
-        <h1 className="font-heading text-2xl font-bold tracking-tight">Регистрация</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">Создайте аккаунт по почте и паролю.</p>
-      </div>
-      <Card>
-        <CardContent>
-          {status === "sent" ? (
-            <p className="text-sm">
-              Проверьте почту <span className="font-medium">{email}</span> и перейдите по ссылке
-              из письма, чтобы подтвердить регистрацию.
-            </p>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="password">Пароль</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  autoComplete="new-password"
-                  minLength={MIN_PASSWORD_LENGTH}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="confirm-password">Повторите пароль</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  required
-                  autoComplete="new-password"
-                  minLength={MIN_PASSWORD_LENGTH}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-              {status === "error" && <p className="text-sm text-destructive">{errorMessage}</p>}
-              <Button type="submit" disabled={status === "sending"}>
-                {status === "sending" ? "Регистрируем..." : "Зарегистрироваться"}
-              </Button>
-            </form>
-          )}
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Уже есть аккаунт?{" "}
-            <Link href="/login" className="font-medium text-foreground underline-offset-2 hover:underline">
-              Войти
-            </Link>
+    <AuthShell
+      kicker="новая жизнь начинается тут"
+      title="Последний раз"
+      accent="опоздал."
+      subtitle="Регистрация — 20 секунд. Это быстрее, чем найти второй носок."
+      board={[
+        { time: "07:55", what: "Ещё 5 минуточек", status: "×6" },
+        { time: "08:31", what: "Бег с бутербродом", status: "ОПОЗДАНИЕ" },
+        { time: "08:12", what: "Выйти вовремя (с нами)", status: "ПО ПЛАНУ", good: true },
+      ]}
+    >
+      {status === "sent" ? (
+        <div>
+          <h2 className="font-heading text-2xl font-bold tracking-tight">Чекни почту</h2>
+          <p className="mt-3 text-muted-foreground">
+            Мы отправили ссылку на <span className="font-semibold text-foreground">{email}</span>.
+            Жми по ней, чтобы подтвердить регистрацию. Нет письма — загляни в «Спам», оно
+            стесняется.
           </p>
-        </CardContent>
-      </Card>
-    </main>
+        </div>
+      ) : (
+        <>
+          <h2 className="font-heading text-2xl font-bold tracking-tight">Регистрация</h2>
+          <p className="mt-1.5 text-sm text-muted-foreground">Почта, пароль — и ты в игре.</p>
+          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="ty@pochta.ru"
+                className={inputClass}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password">Пароль</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                autoComplete="new-password"
+                minLength={MIN_PASSWORD_LENGTH}
+                placeholder={`от ${MIN_PASSWORD_LENGTH} символов, не «123456»`}
+                className={inputClass}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="confirm-password">Ещё разок пароль</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                required
+                autoComplete="new-password"
+                minLength={MIN_PASSWORD_LENGTH}
+                className={inputClass}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+            {status === "error" && <p className="text-sm text-destructive">{errorMessage}</p>}
+            <button type="submit" disabled={status === "sending"} className={primaryButtonClass}>
+              {status === "sending" ? "Регистрируем..." : "Я хочу перестать опаздывать"}
+              <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+            </button>
+          </form>
+        </>
+      )}
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Уже с нами?{" "}
+        <Link href="/login" className="font-semibold text-primary underline-offset-2 hover:underline">
+          Войти
+        </Link>
+      </p>
+    </AuthShell>
   );
 }
