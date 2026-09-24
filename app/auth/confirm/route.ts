@@ -7,6 +7,12 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
+  // `next` comes from the URL, so it's attacker-controllable — restrict it to the two
+  // legitimate destinations instead of passing it straight into a redirect (open-redirect risk).
+  // Recovery links set next=/auth/update-password (see Recovery email template in README);
+  // signup-confirmation and other links fall back to the home page.
+  const rawNext = searchParams.get("next");
+  const next = rawNext === "/auth/update-password" ? rawNext : "/";
 
   // Default Supabase email templates use `{{ .ConfirmationURL }}`, which routes through
   // Supabase's own hosted /auth/v1/verify first; that endpoint redirects back here with
@@ -17,7 +23,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(new URL("/", origin));
+      return NextResponse.redirect(new URL(next, origin));
     }
   }
 
@@ -27,7 +33,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash });
     if (!error) {
-      return NextResponse.redirect(new URL("/", origin));
+      return NextResponse.redirect(new URL(next, origin));
     }
   }
 

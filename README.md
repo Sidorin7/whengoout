@@ -36,7 +36,7 @@ DGIS_API_KEY=  # ключ доступа к API 2ГИС
 ## Supabase (авторизация и данные)
 
 Маршруты и настройки хранятся в Supabase (Postgres + Auth), а не в localStorage. Вход — по
-magic link (ссылка на почту, без пароля).
+почте и паролю (регистрация, вход, сброс пароля).
 
 ### Переменные окружения
 
@@ -56,32 +56,39 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 (`mcp__supabase__apply_migration`) или Supabase CLI — создаёт таблицы `routes` и `settings` с
 RLS-политиками по `auth.uid()`.
 
-### Magic link: как это работает и что настроить руками
+### Почта + пароль: страницы и как это работает
 
-По умолчанию Supabase кладёт в письмо `{{ .ConfirmationURL }}`, который сначала ведёт на
-служебный `.../auth/v1/verify`, а тот уже редиректит браузер на наш `/auth/confirm` с параметром
-`?code=` (PKCE). `app/auth/confirm/route.ts` умеет обменивать этот `code` на сессию
-(`exchangeCodeForSession`) — **это работает из коробки**, без правок в Supabase Dashboard, при
-условии что ссылку открывают в том же браузере, где её запрашивали (PKCE-verifier лежит в cookie
-этого браузера).
+- `/login` — вход по email/паролю (`signInWithPassword`).
+- `/signup` — регистрация (`signUp`). Если в проекте включено подтверждение почты
+  (**Authentication → Providers → Email → Confirm email**, включено по умолчанию на hosted
+  проектах), после регистрации приходит письмо со ссылкой подтверждения и сессия появляется
+  только после перехода по ней; если подтверждение выключено, `signUp` сразу возвращает сессию.
+- `/forgot-password` — запрос ссылки для сброса пароля (`resetPasswordForEmail`).
+- `/auth/update-password` — страница задания нового пароля (`updateUser({ password })`); на неё
+  ведёт ссылка из письма сброса пароля.
+- `app/auth/confirm/route.ts` — общий обработчик ссылок из писем (подтверждение регистрации и
+  сброс пароля). Поддерживает оба формата ссылки:
+  - `?code=...` (PKCE) — ссылка по умолчанию из шаблонов Supabase, идёт через служебный
+    `.../auth/v1/verify` и работает **из коробки**, но только в том браузере, где её запросили
+    (PKCE-verifier лежит в cookie этого браузера).
+  - `?token_hash=...&type=...&next=...` — работает при открытии на **другом устройстве**, но
+    требует правки шаблона письма (см. ниже). `next` — путь, куда редиректить после успешной
+    проверки (`/` по умолчанию, `/auth/update-password` для сброса пароля).
 
-Если нужно, чтобы ссылка работала и при открытии на **другом устройстве** (например, письмо
-открыли на телефоне, а сессию хотят в браузере на компьютере), это требует другого формата ссылки
-— без промежуточного `/verify`:
+Если нужна работа ссылок на другом устройстве, замените в **Authentication → Email Templates**:
 
-1. **Authentication → Email Templates** — в шаблонах **Magic Link** и **Confirm signup**
-   (при первом входе новый пользователь сначала получает Confirm signup — `shouldCreateUser` по
-   умолчанию включён) замените ссылку на:
-   ```
-   {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email
-   ```
-   Обработчик поддерживает и этот формат (`verifyOtp` по `token_hash`).
-2. **Authentication → URL Configuration** — укажите Site URL (например,
-   `http://localhost:3000` для разработки) и добавьте его же в Redirect URLs.
+- **Confirm signup**:
+  ```
+  {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup
+  ```
+- **Reset Password**:
+  ```
+  {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/auth/update-password
+  ```
 
-Обязательно и в том, и в другом случае: **Authentication → URL Configuration → Redirect URLs**
-должен содержать адрес приложения (`http://localhost:3000` для разработки), иначе Supabase
-откажется редиректить на `/auth/confirm`.
+Обязательно в любом случае: **Authentication → URL Configuration → Redirect URLs** должен
+содержать адрес приложения (`http://localhost:3000` для разработки), иначе Supabase откажется
+редиректить на `/auth/confirm`.
 
 Также учитывайте лимит бесплатной отправки писем Supabase (несколько писем в час) — при
 `429 email rate limit exceeded` письмо не отправляется, нужно подождать.
