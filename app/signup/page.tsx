@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { AuthShell, authButtonClass, authInputClass } from "@/components/auth-shell";
+import { AuthShell } from "@/components/auth-shell";
+import { inputClass, primaryButtonClass } from "@/components/board-styles";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
@@ -92,7 +93,7 @@ export default function SignupPage() {
                 required
                 autoComplete="email"
                 placeholder="ty@pochta.ru"
-                className={authInputClass}
+                className={inputClass}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -106,7 +107,7 @@ export default function SignupPage() {
                 autoComplete="new-password"
                 minLength={MIN_PASSWORD_LENGTH}
                 placeholder={`от ${MIN_PASSWORD_LENGTH} символов, не «123456»`}
-                className={authInputClass}
+                className={inputClass}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -119,13 +120,13 @@ export default function SignupPage() {
                 required
                 autoComplete="new-password"
                 minLength={MIN_PASSWORD_LENGTH}
-                className={authInputClass}
+                className={inputClass}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
             {status === "error" && <p className="text-sm text-destructive">{errorMessage}</p>}
-            <button type="submit" disabled={status === "sending"} className={authButtonClass}>
+            <button type="submit" disabled={status === "sending"} className={primaryButtonClass}>
               {status === "sending" ? "Регистрируем..." : "Я хочу перестать опаздывать"}
               <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
             </button>

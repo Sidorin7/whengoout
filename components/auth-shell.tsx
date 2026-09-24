@@ -1,12 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export const authInputClass =
-  "h-12 rounded-xl border-border bg-secondary/60 px-4 text-base md:text-base dark:bg-secondary/60";
-
-export const authButtonClass =
-  "group inline-flex h-13 w-full items-center justify-center gap-2 rounded-full bg-primary px-4 text-[15px] sm:px-6 sm:text-base font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-8px_var(--primary)] disabled:pointer-events-none disabled:opacity-60";
-
 type BoardRow = { time: string; what: string; status: string; good?: boolean };
 
 export function AuthShell({

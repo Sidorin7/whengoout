@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { AuthShell, authButtonClass, authInputClass } from "@/components/auth-shell";
+import { AuthShell } from "@/components/auth-shell";
+import { inputClass, primaryButtonClass } from "@/components/board-styles";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
@@ -72,7 +73,7 @@ function LoginForm() {
             required
             autoComplete="email"
             placeholder="ty@pochta.ru"
-            className={authInputClass}
+            className={inputClass}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -92,13 +93,13 @@ function LoginForm() {
             type="password"
             required
             autoComplete="current-password"
-            className={authInputClass}
+            className={inputClass}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
         {status === "error" && <p className="text-sm text-destructive">{errorMessage}</p>}
-        <button type="submit" disabled={status === "sending"} className={authButtonClass}>
+        <button type="submit" disabled={status === "sending"} className={primaryButtonClass}>
           {status === "sending" ? "Входим..." : "Войти"}
           <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
         </button>
