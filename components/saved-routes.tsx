@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { inputClass } from "@/components/board-styles";
+import { cardClass, inputClass } from "@/components/board-styles";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { calculateAllDepartures, formatTime, isToday } from "@/lib/calculate-departure";
@@ -48,7 +48,7 @@ function RouteSchedule({
           <li
             key={`${entry.weekday}-${entry.time}-${i}`}
             data-today={today || undefined}
-            className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 border-t border-border/60 px-5 py-3 data-[today]:bg-primary/10 sm:grid-cols-[3.5rem_1fr_auto] sm:gap-5 sm:px-6 sm:py-4"
+            className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 border-t border-border px-5 py-3 first:border-t-0 data-[today]:border-l-4 data-[today]:border-l-primary data-[today]:bg-primary/8 data-[today]:pl-4 sm:grid-cols-[3.5rem_1fr_auto] sm:gap-5 sm:px-6 sm:py-4 sm:data-[today]:pl-5"
           >
             <span
               className={
@@ -114,7 +114,7 @@ export function SavedRoutes({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div className="flex flex-col gap-4 rounded-lg border-[1.5px] border-foreground bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
           <p className="font-mono text-xs tracking-widest text-muted-foreground uppercase">сейчас</p>
           <p className="font-mono text-4xl font-semibold text-primary tabular-nums sm:text-5xl">
@@ -144,9 +144,9 @@ export function SavedRoutes({
         {routes.map((route) => (
           <article
             key={route.id}
-            className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-black/30"
+            className={cardClass + " overflow-hidden"}
           >
-            <div className="flex items-center gap-3 bg-secondary/60 px-5 py-4 sm:px-6">
+            <div className="flex items-center gap-3 border-b-[1.5px] border-foreground bg-secondary px-5 py-4 sm:px-6">
               <div className="min-w-0 flex-1">
                 <h2 className="truncate font-heading text-lg font-bold tracking-tight sm:text-xl">
                   {route.name}
@@ -159,7 +159,7 @@ export function SavedRoutes({
               <button
                 type="button"
                 aria-label="Редактировать маршрут"
-                className="grid size-10 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                className="grid size-10 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
                 onClick={() => onEdit(route)}
               >
                 <Pencil className="size-4" />
@@ -167,7 +167,7 @@ export function SavedRoutes({
               <button
                 type="button"
                 aria-label="Удалить маршрут"
-                className="grid size-10 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                className="grid size-10 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                 onClick={() => onDelete(route)}
               >
                 <Trash2 className="size-4" />
@@ -180,7 +180,7 @@ export function SavedRoutes({
         <button
           type="button"
           onClick={onAdd}
-          className="group flex h-16 items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border font-heading text-base font-bold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          className="group flex h-16 items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-foreground/40 font-heading text-base font-bold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
         >
           <Plus className="size-5 transition-transform group-hover:rotate-90" />
           Ещё маршрут

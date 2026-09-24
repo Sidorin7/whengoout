@@ -47,10 +47,6 @@ const STEPS = [
 export default function WelcomePage() {
   return (
     <div className="relative flex flex-1 flex-col overflow-x-clip">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 left-1/2 size-[42rem] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]"
-      />
 
       <header className="relative mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-8">
         <span className="font-heading text-base font-bold tracking-tight sm:text-lg">
@@ -58,7 +54,7 @@ export default function WelcomePage() {
         </span>
         <Link
           href="/login"
-          className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+          className="rounded-md border-[1.5px] border-foreground px-4 py-2 text-sm font-medium transition-colors hover:bg-foreground hover:text-background"
         >
           Войти
         </Link>
@@ -66,8 +62,8 @@ export default function WelcomePage() {
 
       <main className="relative flex flex-1 flex-col">
         <section className="mx-auto w-full max-w-6xl px-4 pt-10 pb-16 sm:px-8 sm:pt-20 sm:pb-24">
-          <p className="inline-flex -rotate-1 items-center gap-2 rounded-full bg-secondary px-4 py-1.5 font-mono text-xs tracking-wide text-muted-foreground uppercase sm:text-sm">
-            <span className="size-2 animate-pulse rounded-full bg-primary" />
+          <p className="flex items-center gap-3 font-mono text-xs tracking-widest text-primary uppercase sm:text-sm">
+            <span aria-hidden className="h-0.5 w-8 bg-primary" />
             для тех, кто «уже выхожу» (нет)
           </p>
 
@@ -79,7 +75,7 @@ export default function WelcomePage() {
                 aria-hidden
                 viewBox="0 0 300 20"
                 preserveAspectRatio="none"
-                className="absolute -bottom-2 left-0 h-3 w-[calc(100%-0.35em)] text-primary/60 sm:-bottom-4 sm:h-5"
+                className="absolute -bottom-2 left-0 h-3 w-[calc(100%-0.35em)] text-primary sm:-bottom-4 sm:h-5"
               >
                 <path
                   d="M2 14 C 60 2, 120 20, 180 8 S 280 4, 298 12"
@@ -101,14 +97,14 @@ export default function WelcomePage() {
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href="/signup"
-              className="group inline-flex h-14 items-center justify-center gap-3 rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground shadow-[0_0_0_0_var(--primary)] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-8px_var(--primary)] sm:h-16 sm:px-9 sm:text-lg"
+              className="group inline-flex h-14 items-center justify-center gap-3 rounded-md border-[1.5px] border-foreground bg-primary px-7 text-base font-semibold text-primary-foreground shadow-[4px_4px_0_0_var(--foreground)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_var(--foreground)] sm:h-16 sm:px-9 sm:text-lg"
             >
               Я хочу перестать опаздывать
               <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               href="/login"
-              className="inline-flex h-14 items-center justify-center rounded-full border border-border px-7 text-base font-medium transition-colors hover:border-foreground sm:h-16 sm:text-lg"
+              className="inline-flex h-14 items-center justify-center rounded-md border-[1.5px] border-foreground px-7 text-base font-medium transition-colors hover:bg-foreground hover:text-background sm:h-16 sm:text-lg"
             >
               Я уже в теме — войти
             </Link>
@@ -118,7 +114,7 @@ export default function WelcomePage() {
           </p>
         </section>
 
-        <div className="-rotate-2 border-y border-border bg-primary py-3 text-primary-foreground">
+        <div className="-rotate-2 border-y-[1.5px] border-foreground bg-primary py-3 text-primary-foreground">
           <div className="flex w-max animate-[marquee_40s_linear_infinite] motion-reduce:animate-none">
             {[...EXCUSES, ...EXCUSES].map((excuse, i) => (
               <span
@@ -140,8 +136,8 @@ export default function WelcomePage() {
             Табло отправлений. Угадай, какой рейс наш.
           </p>
 
-          <div className="mt-10 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-black/40">
-            <div className="flex items-center justify-between border-b border-border bg-secondary px-5 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase">
+          <div className="mt-10 overflow-hidden rounded-lg border-[1.5px] border-foreground bg-card shadow-[6px_6px_0_0_var(--foreground)]">
+            <div className="flex items-center justify-between border-b-[1.5px] border-foreground bg-secondary px-5 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase">
               <span>отправление</span>
               <span className="hidden sm:inline">куда</span>
               <span>статус</span>
@@ -192,9 +188,9 @@ export default function WelcomePage() {
             {STEPS.map((step, i) => (
               <li
                 key={step.title}
-                className="group relative rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/60 sm:p-8"
+                className="group relative rounded-lg border-[1.5px] border-foreground bg-card p-6 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[4px_4px_0_0_var(--foreground)] sm:p-8"
               >
-                <span className="font-heading text-6xl font-bold text-secondary transition-colors group-hover:text-primary/30 sm:text-7xl">
+                <span className="font-heading text-6xl font-bold text-secondary transition-colors group-hover:text-primary sm:text-7xl">
                   0{i + 1}
                 </span>
                 <step.icon className="mt-6 size-7 text-primary" />
@@ -208,7 +204,7 @@ export default function WelcomePage() {
         </section>
 
         <section className="mx-auto w-full max-w-6xl px-4 pb-24 sm:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-14 text-primary-foreground sm:px-14 sm:py-20">
+          <div className="relative overflow-hidden rounded-lg border-[1.5px] border-foreground bg-primary px-6 py-14 text-primary-foreground sm:px-14 sm:py-20">
             <span
               aria-hidden
               className="pointer-events-none absolute -right-6 -bottom-10 font-heading text-[10rem] leading-none font-bold opacity-10 select-none sm:text-[16rem]"
@@ -223,7 +219,7 @@ export default function WelcomePage() {
             </p>
             <Link
               href="/signup"
-              className="group relative mt-10 inline-flex h-14 items-center gap-3 rounded-full bg-background px-8 text-base font-semibold text-foreground transition-transform hover:-translate-y-0.5 sm:h-16 sm:text-lg"
+              className="group relative mt-10 inline-flex h-14 items-center gap-3 rounded-md border-[1.5px] border-foreground bg-background px-8 text-base font-semibold text-foreground shadow-[4px_4px_0_0_var(--foreground)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_var(--foreground)] sm:h-16 sm:text-lg"
             >
               Попробовать
               <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />

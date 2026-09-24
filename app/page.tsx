@@ -40,8 +40,7 @@ export default function Home() {
     return (
       <main className="flex flex-1 items-center justify-center px-4 py-8">
         <p className="font-mono text-sm tracking-widest text-muted-foreground uppercase">
-          <span className="mr-2 inline-block size-2 animate-pulse rounded-full bg-primary" />
-          Загружаем табло...
+                    Загружаем табло...
         </p>
       </main>
     );
@@ -49,10 +48,6 @@ export default function Home() {
 
   return (
     <div className="relative flex flex-1 flex-col overflow-x-clip">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 left-1/2 size-[36rem] -translate-x-1/2 rounded-full bg-primary/10 blur-[120px]"
-      />
 
       <header className="relative mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-5 sm:px-8">
         <span className="font-heading text-base font-bold tracking-tight sm:text-lg">
@@ -63,8 +58,8 @@ export default function Home() {
 
       <main className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 pt-4 pb-16 sm:px-8 sm:pt-8">
         <section>
-          <p className="inline-flex -rotate-1 items-center gap-2 rounded-full bg-secondary px-4 py-1.5 font-mono text-xs tracking-wide text-muted-foreground uppercase sm:text-sm">
-            <span className="size-2 animate-pulse rounded-full bg-primary" />
+          <p className="flex items-center gap-3 font-mono text-xs tracking-widest text-primary uppercase sm:text-sm">
+            <span aria-hidden className="h-0.5 w-8 bg-primary" />
             {view.name === "list" ? "табло отправлений" : "диспетчерская"}
           </p>
           <h1 className="mt-4 font-heading text-[clamp(2.25rem,7vw,4.5rem)] leading-[0.95] font-bold tracking-[-0.04em] text-balance">
@@ -87,7 +82,7 @@ export default function Home() {
         </section>
 
         {error && (
-          <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <p className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {error}
           </p>
         )}
