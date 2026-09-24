@@ -1,36 +1,142 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Когда выйти?
 
-## Getting Started
+MVP веб-сервиса, который по адресу отправления, адресу назначения, времени прибытия и запасу
+времени рассчитывает, во сколько нужно выйти. Маршруты и геокодирование — через API 2ГИС.
 
-First, run the development server:
+## Стек
+
+Next.js 15+ (App Router) · TypeScript · Tailwind CSS · shadcn/ui · pnpm
+
+## Переменные окружения
+
+Скопируйте `.env.example` в `.env.local` и укажите ключ:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```
+DGIS_API_KEY=  # ключ доступа к API 2ГИС
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Как получить ключ 2ГИС (бесплатно)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Зарегистрируйтесь в личном кабинете **Менеджер Платформы**: https://dev.2gis.ru/
+2. В разделе «Ключи» создайте **демо-ключ** (бесплатный, с ограничением по числу запросов).
+3. Убедитесь, что в ключе включены сервисы: **API поиска** (Suggest, Geocoder) и
+   **API навигации** (Routing, Public Transport).
+4. Вставьте значение ключа в `.env.local`.
 
-## Learn More
+**Без ключа сервис тоже работает** — в режиме разработки (`NODE_ENV !== production`) он
+автоматически переключается на демо-данные (несколько московских адресов и упрощённый расчёт
+расстояния/времени), чтобы можно было проверить весь интерфейс. В таких ответах API проставляется
+заголовок `X-Mock: 1`, а в результате — пояснительная надпись. В продакшене без ключа сервис вернёт
+понятную ошибку вместо тихого использования моков.
 
-To learn more about Next.js, take a look at the following resources:
+## Supabase (авторизация и данные)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Маршруты и настройки хранятся в Supabase (Postgres + Auth), а не в localStorage. Вход — по
+почте и паролю (регистрация, вход, сброс пароля).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Переменные окружения
 
-## Deploy on Vercel
+Добавьте в `.env.local` (значения — из **Project Settings → API** в Supabase Dashboard):
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Без этих переменных серверный клиент Supabase (в `proxy.ts` и `lib/supabase/server.ts`) упадёт
+с ошибкой на каждом запросе.
+
+### Схема БД
+
+Миграция лежит в `supabase/migrations/` и применяется через Supabase MCP
+(`mcp__supabase__apply_migration`) или Supabase CLI — создаёт таблицы `routes` и `settings` с
+RLS-политиками по `auth.uid()`.
+
+### Почта + пароль: страницы и как это работает
+
+- `/login` — вход по email/паролю (`signInWithPassword`).
+- `/signup` — регистрация (`signUp`). Если в проекте включено подтверждение почты
+  (**Authentication → Providers → Email → Confirm email**, включено по умолчанию на hosted
+  проектах), после регистрации приходит письмо со ссылкой подтверждения и сессия появляется
+  только после перехода по ней; если подтверждение выключено, `signUp` сразу возвращает сессию.
+- `/forgot-password` — запрос ссылки для сброса пароля (`resetPasswordForEmail`).
+- `/auth/update-password` — страница задания нового пароля (`updateUser({ password })`); на неё
+  ведёт ссылка из письма сброса пароля.
+- `app/auth/confirm/page.tsx` — общая страница подтверждения ссылок из писем (регистрация и
+  сброс пароля). Верификация происходит **только по клику на кнопку**, а не сразу при открытии
+  страницы: почтовые клиенты (замечено на `@yandex.ru`) сканируют ссылки на вирусы, открывая их
+  раньше пользователя, и если бы проверка запускалась на `GET`/при загрузке страницы, такой
+  сканер сжигал бы одноразовый токен раньше человека — ссылка выглядела бы «недействительной»
+  ещё до первого реального клика (см. [Supabase: Email prefetching](https://supabase.com/docs/guides/auth/auth-email-templates#email-prefetching)).
+  Страница поддерживает оба формата ссылки:
+  - `?code=...` (PKCE) — ссылка по умолчанию из шаблонов Supabase, идёт через служебный
+    `.../auth/v1/verify` и работает **из коробки**, но только в том браузере, где её запросили
+    (PKCE-verifier лежит в cookie этого браузера).
+  - `?token_hash=...&type=...&next=...` — работает при открытии на **другом устройстве**, но
+    требует правки шаблона письма (см. ниже). `next` — путь, куда редиректить после успешной
+    проверки (`/` по умолчанию, `/auth/update-password` для сброса пароля).
+
+Если нужна работа ссылок на другом устройстве, замените в **Authentication → Email Templates**:
+
+- **Confirm signup**:
+  ```
+  {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup
+  ```
+- **Reset Password**:
+  ```
+  {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/auth/update-password
+  ```
+
+Обязательно в любом случае: **Authentication → URL Configuration → Redirect URLs** должен
+содержать адрес приложения (`http://localhost:3000` для разработки), иначе Supabase откажется
+редиректить на `/auth/confirm`.
+
+Также учитывайте лимит бесплатной отправки писем Supabase (несколько писем в час) — при
+`429 email rate limit exceeded` письмо не отправляется, нужно подождать.
+
+## Запуск
+
+```bash
+pnpm install
+pnpm dev       # http://localhost:3000
+```
+
+Продакшен-сборка:
+
+```bash
+pnpm build
+pnpm start
+```
+
+Проверки:
+
+```bash
+pnpm lint
+pnpm exec tsc --noEmit
+```
+
+## Известное ограничение API 2ГИС
+
+У 2ГИС нет режима «построить маршрут так, чтобы прибыть к заданному времени» — только время
+отправления. Поэтому сервис делает расчёт в два прохода: сначала строит маршрут от ориентировочного
+времени выхода, затем уточняет маршрут от времени, полученного на первом шаге (важно для авто и
+общественного транспорта, где длительность зависит от времени суток).
+
+## Структура
+
+```
+app/
+  page.tsx              главный экран
+  api/geocode/route.ts  подсказки и геокодирование адресов (проксирует 2ГИС, ключ не покидает сервер)
+  api/route/route.ts    расчёт времени выхода
+components/             UI-компоненты формы, результата и шкалы времени
+lib/
+  2gis.ts               серверный клиент 2ГИС API
+  calculate-departure.ts чистая логика расчёта времени
+  mock.ts               демо-данные для режима без ключа
+  types.ts              общие типы
+```
